@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabTrack - Lab Equipment & Component Borrowing System</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Semantic Header (Unit 1 & 2) -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <rect x="9" y="9" width="6" height="6" />
+            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">LabTrack</h1>
+          <span class="brand-subtitle">Lab Equipment & Component Borrowing System</span>
+        </div>
+      </div>
+
+      <!-- User Auth State / Action Area -->
+      <div class="header-actions">
+        <!-- Live System Status Indicator -->
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span class="status-text" id="system-status-indicator">Inventory Online</span>
+        </div>
+
+        <!-- Role Badge & Account Panel -->
+        <div id="user-profile-widget" class="user-profile-widget">
+          <!-- Populated dynamically via JS: Login buttons or Profile Badge -->
+          <button class="btn btn-primary btn-sm" id="btn-open-login" onclick="App.openAuthModal('login')">
+            Sign In / Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flexbox Top Navigation Bar (Unit 1 & 2) -->
+  <nav class="top-nav" aria-label="Main Navigation">
+    <div class="nav-container">
+      <div class="nav-tabs" role="tablist">
+        <button class="nav-tab active" data-tab="catalog" onclick="App.switchTab('catalog')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          Hardware Catalog
+        </button>
+        <button class="nav-tab" data-tab="my-borrowings" id="tab-my-borrowings" onclick="App.switchTab('my-borrowings')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          My Borrowings <span class="tab-badge" id="my-borrowings-count">0</span>
+        </button>
+        <button class="nav-tab admin-only" data-tab="admin-records" id="tab-admin-records" onclick="App.switchTab('admin-records')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Borrow Management
+        </button>
+        <button class="nav-tab" data-tab="analytics" id="tab-analytics" onclick="App.switchTab('analytics')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Usage Analytics
+        </button>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="nav-actions">
+        <button class="btn btn-outline btn-sm admin-only" id="btn-view-audit-trail" onclick="App.openAuditModal()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          View Audit Trail
+        </button>
+        <button class="btn btn-accent btn-sm admin-only" id="btn-add-component" onclick="App.openAddComponentModal()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          + Add Equipment
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flexbox Top Stats Bar (Unit 1 & 2) -->
+  <section class="stats-bar" aria-label="Key Laboratory Metrics">
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon bg-indigo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Total Hardware Items</span>
+          <h2 class="stat-value" id="stat-total-items">0</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-emerald">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Available In Stock</span>
+          <h2 class="stat-value text-emerald" id="stat-available-units">0</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-amber">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Currently Borrowed</span>
+          <h2 class="stat-value text-amber" id="stat-borrowed-units">0</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon bg-rose">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Overdue Returns</span>
+          <h2 class="stat-value text-rose" id="stat-overdue-units">0</h2>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Semantic Main Content Area -->
+  <main class="main-content">
+    <!-- VIEW 1: Hardware Catalog Section -->
+    <section id="view-catalog" class="tab-view active">
+      <div class="catalog-controls">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="search-input" placeholder="Search equipment by name, lab room, MCU, specs..." oninput="App.handleSearch(this.value)" />
+          <button id="search-clear-btn" class="search-clear-btn" onclick="App.clearSearch()" style="display:none;">&times;</button>
+        </div>
+
+        <div class="filter-controls">
+          <label for="category-select" class="sr-only">Filter by Category</label>
+          <select id="category-select" onchange="App.handleCategoryFilter(this.value)">
+            <option value="All">All Hardware Categories</option>
+            <option value="Microcontrollers">Microcontrollers</option>
+            <option value="SBC / Single Board Computers">SBC / Single Board Computers</option>
+            <option value="Sensors & Modules">Sensors & Modules</option>
+            <option value="Development Boards">Development Boards</option>
+            <option value="Test & Measurement">Test & Measurement</option>
+            <option value="Actuators & Motors">Actuators & Motors</option>
+          </select>
+
+          <label for="status-select" class="sr-only">Filter by Stock Status</label>
+          <select id="status-select" onchange="App.handleStatusFilter(this.value)">
+            <option value="All">All Stock Statuses</option>
+            <option value="Available">Available Only</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- CSS Grid Hardware Cards Container (Unit 1 & 2) -->
+      <section class="hardware-grid" id="hardware-grid-container" aria-live="polite">
+        <!-- Hardware Cards loaded dynamically as semantic <article> elements -->
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading laboratory inventory items...</p>
+        </div>
+      </section>
+    </section>
+
+    <!-- VIEW 2: My Borrowings Section -->
+    <section id="view-my-borrowings" class="tab-view">
+      <div class="section-header">
+        <div>
+          <h2>My Borrowing Transactions</h2>
+          <p class="section-desc">Track active loans, verify expected due dates, and submit equipment returns.</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="App.loadMyBorrowings()">
+          🔄 Refresh
+        </button>
+      </div>
+
+      <div class="records-container" id="my-borrowings-container">
+        <!-- Dynamic list of student's borrow records -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: Admin Borrow Management Section (Admin Only) -->
+    <section id="view-admin-records" class="tab-view">
+      <div class="section-header">
+        <div>
+          <h2>Central Borrowing Ledger & Oversight</h2>
+          <p class="section-desc">Manage all student checkouts, inspect uploaded requisition slips, approve returns, and dispatch overdue email notices.</p>
+        </div>
+        <div class="ledger-actions">
+          <select id="admin-status-filter" onchange="App.loadAdminRecords(this.value)">
+            <option value="All">Filter: All Statuses</option>
+            <option value="Issued">Issued / Active Loans</option>
+            <option value="Overdue">Overdue Items</option>
+            <option value="Returned">Returned History</option>
+            <option value="Requested">Pending Requisitions</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="App.loadAdminRecords()">
+            🔄 Refresh Records
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table" id="admin-records-table">
+          <thead>
+            <tr>
+              <th>Borrower (PRN & Dept)</th>
+              <th>Hardware Component</th>
+              <th>Qty</th>
+              <th>Borrowed Date</th>
+              <th>Due Date</th>
+              <th>Slip / Requisition</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-records-tbody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- VIEW 4: Usage Analytics Section (Unit 4 Aggregation) -->
+    <section id="view-analytics" class="tab-view">
+      <div class="section-header">
+        <div>
+          <h2>MongoDB Aggregation Analytics</h2>
+          <p class="section-desc">Real-time calculations powered by MongoDB Aggregation Pipelines (<code>$group</code>, <code>$sum</code>, <code>$project</code>) for stock distribution & department utilization.</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="App.loadAnalytics()">
+          🔄 Refresh Analytics
+        </button>
+      </div>
+
+      <!-- Analytics Dashboard Grid -->
+      <div class="analytics-dashboard">
+        <!-- Category-wise Stock Analysis -->
+        <article class="analytics-card">
+          <div class="analytics-card-header">
+            <h3>Category-Wise Stock & Utilization Breakdown</h3>
+            <span class="badge badge-info">MongoDB $group + $project</span>
+          </div>
+          <div class="analytics-card-body">
+            <div class="table-responsive">
+              <table class="data-table mini-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Items</th>
+                    <th>Total Units</th>
+                    <th>Available</th>
+                    <th>Borrowed</th>
+                    <th>Utilization</th>
+                  </tr>
+                </thead>
+                <tbody id="analytics-category-tbody">
+                  <!-- Populated via GET /api/components/analytics -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+
+        <!-- Department-Wise Usage Analysis -->
+        <article class="analytics-card">
+          <div class="analytics-card-header">
+            <h3>Department Borrowing Frequency</h3>
+            <span class="badge badge-info">User $lookup + $group</span>
+          </div>
+          <div class="analytics-card-body">
+            <div id="analytics-dept-bars" class="dept-bars-container">
+              <!-- Department bar charts populated dynamically -->
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Semantic Footer (Unit 1 & 2) -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <div class="brand-inline">
+          <span class="footer-title">LabTrack System</span>
+          <span class="badge badge-pill">v1.0 Production</span>
+        </div>
+        <p class="footer-desc">Central Laboratory Equipment & Embedded Component Tracking System. Designed for academic labs and hardware research centers.</p>
+      </div>
+
+      <div class="footer-rubric-tags">
+        <span class="rubric-tag" title="Unit 1 & 2: Semantic HTML5, CSS Grid & Flexbox, HTML5 Validation">Unit 1 & 2: HTML5/CSS Grid</span>
+        <span class="rubric-tag" title="Unit 3: Native EventEmitter, Non-blocking fs, Multer, Nodemailer">Unit 3: Node Core & Multer</span>
+        <span class="rubric-tag" title="Unit 4: MongoDB Aggregation Pipelines & CRUD">Unit 4: Mongo Aggregation</span>
+        <span class="rubric-tag" title="Unit 5 & 6: JWT Authentication & Render Deployment">Unit 5 & 6: JWT & Deployment</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. AUTH MODAL (Login / Register with HTML5 Validation & PRN Pattern ^[0-9]{11}$) -->
+  <div class="modal-backdrop" id="modal-auth" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-content modal-auth-box">
+      <button class="modal-close-btn" onclick="App.closeModals()">&times;</button>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tab-btn-login" onclick="App.toggleAuthMode('login')">Sign In</button>
+        <button class="auth-tab-btn" id="tab-btn-register" onclick="App.toggleAuthMode('register')">Register Student</button>
+      </div>
+
+      <!-- Quick Demo Login Helpers -->
+      <div class="demo-helpers">
+        <span class="demo-helpers-title">⚡ Quick Evaluation Sign-In:</span>
+        <div class="demo-btn-group">
+          <button type="button" class="btn btn-xs btn-outline" onclick="App.quickLogin('admin')">
+            👨‍🏫 Prof. Vikram (Admin)
+          </button>
+          <button type="button" class="btn btn-xs btn-outline" onclick="App.quickLogin('student')">
+            👨‍🎓 Aarav Patel (Student)
+          </button>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" class="auth-form active" onsubmit="App.handleLogin(event)">
+        <h3 id="auth-modal-title" class="sr-only">Sign In</h3>
+
+        <div class="form-group">
+          <label for="login-identifier">Institutional Email or 11-Digit PRN <span class="required-star">*</span></label>
+          <input
+            type="text"
+            id="login-identifier"
+            required
+            placeholder="e.g. admin@labtrack.edu or 20240112345"
+            autocomplete="username"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Password <span class="required-star">*</span></label>
+          <input
+            type="password"
+            id="login-password"
+            required
+            minlength="6"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btn-submit-login">
+            Authenticate & Proceed
+          </button>
+        </div>
+      </form>
+
+      <!-- Register Form (Unit 1 & 2 HTML5 Validation attributes: required, pattern="^[0-9]{11}$") -->
+      <form id="form-register" class="auth-form" onsubmit="App.handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-name">Full Name <span class="required-star">*</span></label>
+          <input
+            type="text"
+            id="reg-name"
+            required
+            maxlength="100"
+            placeholder="e.g. Priya Sharma"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Institutional Email Address <span class="required-star">*</span></label>
+          <input
+            type="email"
+            id="reg-email"
+            required
+            placeholder="e.g. priya@labtrack.edu"
+          />
+        </div>
+
+        <!-- Unit 1 & 2 Rubric Requirement: PRN pattern="^[0-9]{11}$" -->
+        <div class="form-group">
+          <label for="reg-prn">
+            11-Digit PRN (Permanent Registration No.) <span class="required-star">*</span>
+          </label>
+          <input
+            type="text"
+            id="reg-prn"
+            required
+            pattern="^[0-9]{11}$"
+            title="PRN must be exactly 11 numeric digits (e.g., 20240112345)"
+            placeholder="e.g. 20240112345"
+            maxlength="11"
+          />
+          <small class="form-hint">Pattern: Exactly 11 digits (^[0-9]{11}$)</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-dept">Academic Department <span class="required-star">*</span></label>
+            <select id="reg-dept" required>
+              <option value="CSE">CSE - Computer Science</option>
+              <option value="ECE" selected>ECE - Electronics & Comm.</option>
+              <option value="ROBOTICS">ROBOTICS & Automation</option>
+              <option value="MECH">Mechanical Engineering</option>
+              <option value="EEE">Electrical & Electronics</option>
+              <option value="IT">Information Technology</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-role">Role <span class="required-star">*</span></label>
+            <select id="reg-role" required>
+              <option value="student" selected>Student</option>
+              <option value="admin">Lab Administrator / Faculty</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Create Password <span class="required-star">*</span></label>
+          <input
+            type="password"
+            id="reg-password"
+            required
+            minlength="6"
+            placeholder="Minimum 6 characters"
+          />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btn-submit-register">
+            Create Lab Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. BORROW REQUISITION MODAL (Multer File Upload & HTML5 Validation: min, max, required) -->
+  <div class="modal-backdrop" id="modal-borrow" role="dialog" aria-modal="true" aria-labelledby="borrow-modal-title">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="App.closeModals()">&times;</button>
+      
+      <div class="modal-header">
+        <h3 id="borrow-modal-title">Equipment Checkout Requisition</h3>
+        <p class="modal-desc">Submit requisition slip and borrow equipment for laboratory or project work.</p>
+      </div>
+
+      <form id="form-borrow" onsubmit="App.handleBorrowSubmit(event)" enctype="multipart/form-data">
+        <input type="hidden" id="borrow-component-id" name="componentId" />
+
+        <div class="borrow-item-preview" id="borrow-item-preview">
+          <!-- Populated dynamically with selected item name, stock, lab location -->
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="borrow-qty">Quantity to Borrow <span class="required-star">*</span></label>
+            <!-- Unit 1 & 2 HTML5 validation: required, min="1", max based on available stock -->
+            <input
+              type="number"
+              id="borrow-qty"
+              name="quantity"
+              required
+              min="1"
+              max="1"
+              value="1"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="borrow-return-date">Expected Return Date <span class="required-star">*</span></label>
+            <!-- Unit 1 & 2 HTML5 validation: required, min="today" -->
+            <input
+              type="date"
+              id="borrow-return-date"
+              name="expectedReturnDate"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="borrow-purpose">Borrowing Purpose / Project Title <span class="required-star">*</span></label>
+          <textarea
+            id="borrow-purpose"
+            name="purpose"
+            required
+            rows="3"
+            maxlength="300"
+            placeholder="e.g., IoT Autonomous Rover Lab Experiment 4"
+          ></textarea>
+        </div>
+
+        <!-- Unit 3 Multer File Upload: Student ID / Lab Requisition Slip -->
+        <div class="form-group">
+          <label for="borrow-slip">
+            Upload Student ID / Requisition Slip Document <span class="required-star">*</span>
+          </label>
+          <div class="file-upload-box">
+            <input
+              type="file"
+              id="borrow-slip"
+              name="requisitionSlip"
+              required
+              accept=".pdf,image/png,image/jpeg,image/webp"
+              onchange="App.handleFileSelect(this)"
+            />
+            <div class="file-upload-content">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span id="file-label-text">Click to browse or drag & drop Requisition PDF / ID Card Image</span>
+              <small>Accepted formats: PDF, PNG, JPG, WEBP (Max 5MB)</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="App.closeModals()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-borrow">
+            Confirm Checkout & Send Automated Email
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. ADD / EDIT EQUIPMENT MODAL (Admin Only) -->
+  <div class="modal-backdrop" id="modal-component" role="dialog" aria-modal="true" aria-labelledby="component-modal-title">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="App.closeModals()">&times;</button>
+      
+      <div class="modal-header">
+        <h3 id="component-modal-title">Add Laboratory Hardware Asset</h3>
+        <p class="modal-desc">Register new microcontroller boards, sensors, or instrumentation into inventory.</p>
+      </div>
+
+      <form id="form-component" onsubmit="App.handleComponentSubmit(event)">
+        <input type="hidden" id="comp-id" />
+
+        <div class="form-group">
+          <label for="comp-name">Component Name <span class="required-star">*</span></label>
+          <input
+            type="text"
+            id="comp-name"
+            required
+            maxlength="120"
+            placeholder="e.g. ESP32 Wi-Fi + BLE Dev Board"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="comp-category">Category <span class="required-star">*</span></label>
+            <select id="comp-category" required>
+              <option value="Microcontrollers">Microcontrollers</option>
+              <option value="SBC / Single Board Computers">SBC / Single Board Computers</option>
+              <option value="Sensors & Modules">Sensors & Modules</option>
+              <option value="Development Boards">Development Boards</option>
+              <option value="Test & Measurement">Test & Measurement</option>
+              <option value="Actuators & Motors">Actuators & Motors</option>
+              <option value="General Accessories">General Accessories</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="comp-lab">Lab Room & Shelf Location <span class="required-star">*</span></label>
+            <input
+              type="text"
+              id="comp-lab"
+              required
+              value="Lab 302 - Embedded Systems & IoT"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="comp-total-stock">Total Stock Units <span class="required-star">*</span></label>
+            <input
+              type="number"
+              id="comp-total-stock"
+              required
+              min="1"
+              value="10"
+              oninput="App.syncStockInputs()"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="comp-avail-stock">Available Units <span class="required-star">*</span></label>
+            <input
+              type="number"
+              id="comp-avail-stock"
+              required
+              min="0"
+              value="10"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="comp-specs">Hardware Technical Specifications <span class="required-star">*</span></label>
+          <textarea
+            id="comp-specs"
+            required
+            rows="2"
+            placeholder="Operating voltage, MCU chip, interfaces, memory..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="comp-desc">Description & Prototyping Use Cases</label>
+          <textarea
+            id="comp-desc"
+            rows="2"
+            placeholder="Overview of board capabilities..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="comp-image">Image URL (Optional)</label>
+          <input
+            type="url"
+            id="comp-image"
+            placeholder="https://images.unsplash.com/photo-..."
+          />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="App.closeModals()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-comp">
+            Save Component to Inventory
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. AUDIT TRAIL MODAL (Unit 3 Rubric: GET /api/borrow/logs using fs.readFile) -->
+  <div class="modal-backdrop" id="modal-audit" role="dialog" aria-modal="true" aria-labelledby="audit-modal-title">
+    <div class="modal-content modal-lg">
+      <button class="modal-close-btn" onclick="App.closeModals()">&times;</button>
+      
+      <div class="modal-header modal-header-flex">
+        <div>
+          <h3 id="audit-modal-title">Live Audit Trail (logs/audit_trail.log)</h3>
+          <p class="modal-desc">
+            Powered by Node.js native <code>EventEmitter</code> & non-blocking <code>fs.appendFile</code>. Read via <code>GET /api/borrow/logs</code> using <code>fs.readFile</code>.
+          </p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="App.fetchAuditLogs()">
+          🔄 Reload Logs
+        </button>
+      </div>
+
+      <div class="audit-search-bar">
+        <input
+          type="text"
+          id="audit-filter-input"
+          placeholder="Filter audit trail events (e.g. BORROW, RETURN, PRN, Component)..."
+          oninput="App.filterAuditLogs(this.value)"
+        />
+        <span class="audit-counter" id="audit-counter">0 events logged</span>
+      </div>
+
+      <div class="audit-logs-terminal" id="audit-logs-terminal">
+        <!-- Rendered log lines -->
+        <p class="loading-state">Reading audit_trail.log from server filesystem...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container" aria-live="assertive"></div>
+
+  <!-- Application Script -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
